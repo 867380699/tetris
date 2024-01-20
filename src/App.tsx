@@ -8,31 +8,51 @@ function App() {
   useEffect(() => {
     const pixiApp = new PIXI.Application<HTMLCanvasElement>({
       background: "#585b70",
-      resizeTo: document.body,
+      resizeTo: window,
     });
 
-    const width = pixiApp.view.width;
-    const height = pixiApp.view.height;
     const row = 20;
     const col = 10;
-    const side = Math.min(height / row, width / col);
-    const left = (width - col * side) / 2;
-    const top = (height - row * side) / 2;
 
-    // console.log(height, width, side, left, top);
+    let width = pixiApp.view.width;
+    let height = pixiApp.view.height;
+    let side = Math.min(height / row, width / col);
+    let left = (width - col * side) / 2;
+    let top = (height - row * side) / 2;
 
     const lines = new PIXI.Graphics();
-    lines.lineStyle(2, 0x7f849c);
 
-    for (let i = 0; i < row + 1; i++) {
-      lines.moveTo(left, i * side + top);
-      lines.lineTo(left + col * side, i * side + top);
-    }
-    for (let i = 0; i < col + 1; i++) {
-      lines.moveTo(left + i * side, top);
-      lines.lineTo(left + i * side, top + row * side);
-    }
     pixiApp.stage.addChild(lines);
+
+    const drawLines = () => {
+      lines.clear();
+      lines.lineStyle(2, 0x7f849c);
+
+      for (let i = 0; i < row + 1; i++) {
+        lines.moveTo(left, i * side + top);
+        lines.lineTo(left + col * side, i * side + top);
+      }
+      for (let i = 0; i < col + 1; i++) {
+        lines.moveTo(left + i * side, top);
+        lines.lineTo(left + i * side, top + row * side);
+      }
+    };
+    drawLines();
+
+    window.addEventListener("resize", () => {
+      setTimeout(() => {
+        width = pixiApp.view.width;
+        height = pixiApp.view.height;
+        side = Math.min(height / row, width / col);
+        left = (width - col * side) / 2;
+        top = (height - row * side) / 2;
+        drawLines();
+        drawBoard();
+        drawCurrent();
+      });
+    });
+
+    // console.log(height, width, side, left, top);
 
     const board = new Array(row);
     for (let i = 0; i < board.length; i++) {
