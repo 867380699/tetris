@@ -74,22 +74,30 @@ function App() {
       shape: [[]] as (number | TetrominoType)[][],
     };
     resetCurrent();
-    const checkCollision = () => {
-      for (let y = 0; y < current.shape.length; y++) {
-        for (let x = 0; x < current.shape[y].length; x++) {
+
+    const checkCollision = (
+      shape: (number | TetrominoType)[][],
+      position: { x: number; y: number },
+    ) => {
+      for (let y = 0; y < shape.length; y++) {
+        for (let x = 0; x < shape[y].length; x++) {
           if (
-            current.shape[y][x] &&
-            board[y + current.position.y] &&
-            board[y + current.position.y][x + current.position.x]
+            shape[y][x] &&
+            board[y + position.y] &&
+            board[y + position.y][x + position.x]
           ) {
             return true;
           }
-          if (current.shape[y][x] && y + current.position.y === row) {
+          if (shape[y][x] && y + position.y === row) {
             return true;
           }
         }
       }
       return false;
+    };
+    const checkCurrentCollision = () => {
+      const { shape, position } = current;
+      return checkCollision(shape, position);
     };
     const checkOutsideWalls = () => {
       for (let y = 0; y < current.shape.length; y++) {
@@ -145,7 +153,7 @@ function App() {
 
     const moveLeft = () => {
       current.position.x -= 1;
-      const failed = checkOutsideWalls() || checkCollision();
+      const failed = checkOutsideWalls() || checkCurrentCollision();
       if (failed) {
         current.position.x += 1;
       }
@@ -153,7 +161,7 @@ function App() {
     };
     const moveRight = () => {
       current.position.x += 1;
-      const failed = checkOutsideWalls() || checkCollision();
+      const failed = checkOutsideWalls() || checkCurrentCollision();
       if (failed) {
         current.position.x -= 1;
       }
@@ -161,7 +169,7 @@ function App() {
     };
     const moveDown = () => {
       current.position.y += 1;
-      const isCollision = checkCollision();
+      const isCollision = checkCurrentCollision();
       if (isCollision) {
         current.position.y -= 1;
         merge();
@@ -181,7 +189,7 @@ function App() {
 
     const rotateCurrent = () => {
       current.shape = rotate(current.shape);
-      if (checkOutsideWalls() || checkCollision()) {
+      if (checkOutsideWalls() || checkCurrentCollision()) {
         if (moveLeft()) {
           // do nothing
         } else if (moveRight()) {
@@ -262,6 +270,9 @@ function App() {
 
     const currentGraphics = new PIXI.Graphics();
     pixiApp.stage.addChild(currentGraphics);
+    const shadowGraphics = new PIXI.Graphics();
+    shadowGraphics.alpha = 0.5;
+    pixiApp.stage.addChild(shadowGraphics);
 
     const drawCurrent = () => {
       currentGraphics.clear();
@@ -273,6 +284,30 @@ function App() {
               value as TetrominoType,
               current.position.y + y,
               current.position.x + x,
+            );
+          }
+        });
+      });
+      const shadowShape = current.shape.map((row) => row.map((v) => v));
+      const shadowPosition = {
+        x: current.position.x,
+        y: current.position.y,
+      };
+      do {
+        shadowPosition.y += 1;
+      } while (!checkCollision(shadowShape, shadowPosition));
+      shadowPosition.y -= 1;
+      shadowGraphics.clear();
+      shadowShape.forEach((row, y) => {
+        row.forEach((value, x) => {
+          if (value) {
+            shadowGraphics.beginFill(palette[value], 0.5);
+            shadowGraphics.lineStyle(2, 0x7f849c);
+            shadowGraphics.drawRect(
+              left + (shadowPosition.x + x) * side,
+              top + (shadowPosition.y + y) * side,
+              side,
+              side,
             );
           }
         });
