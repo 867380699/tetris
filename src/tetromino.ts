@@ -14,10 +14,10 @@ const tetrominoTypes: TetrominoType[] = ["I", "J", "L", "O", "S", "T", "Z"];
 
 export const tetrominoShape: Record<TetrominoType, number[][]> = {
   I: [
-    [0, 1, 0, 0],
-    [0, 1, 0, 0],
-    [0, 1, 0, 0],
-    [0, 1, 0, 0],
+    [0, 0, 0, 0],
+    [1, 1, 1, 1],
+    [0, 0, 0, 0],
+    [0, 0, 0, 0],
   ],
   J: [
     [0, 1, 0],

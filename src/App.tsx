@@ -16,9 +16,12 @@ function App() {
 
     let width = pixiApp.view.width;
     let height = pixiApp.view.height;
-    let side = Math.min(height / row, width / col);
+    const offsetTop = 2;
+    const offsetBottom = 1;
+    let side = Math.min(height / (row + offsetBottom + offsetTop), width / col);
     let left = (width - col * side) / 2;
-    let top = (height - row * side) / 2;
+    let top =
+      (height - (row + offsetTop + offsetBottom) * side) / 2 + offsetTop * side;
 
     const lines = new PIXI.Graphics();
 
@@ -43,9 +46,11 @@ function App() {
       setTimeout(() => {
         width = pixiApp.view.width;
         height = pixiApp.view.height;
-        side = Math.min(height / row, width / col);
+        side = Math.min(height / (row + offsetBottom + offsetTop), width / col);
         left = (width - col * side) / 2;
-        top = (height - row * side) / 2;
+        top =
+          (height - (row + offsetTop + offsetBottom) * side) / 2 +
+          offsetTop * side;
         drawLines();
         drawBoard();
         drawCurrent();
@@ -58,11 +63,101 @@ function App() {
     for (let i = 0; i < board.length; i++) {
       board[i] = new Array(col).fill(0);
     }
+    const palette: Record<TetrominoType, number> = {
+      I: 0xcba6f7,
+      O: 0xf38ba8,
+      T: 0xfab387,
+      S: 0xa6e3a1,
+      Z: 0x94e2d5,
+      J: 0x89b4fa,
+      L: 0xf5c2e7,
+    };
+
+    const tetrominoQueue: { type: TetrominoType; shape: number[][] }[] = [];
+    tetrominoQueue.push(randomTetromino());
+    tetrominoQueue.push(randomTetromino());
+
+    const nextGraphics = new PIXI.Graphics();
+    pixiApp.stage.addChild(nextGraphics);
+    const drawNext = () => {
+      const panelTop = top - 2 * side + 4;
+      const panelLeft = left + side * 6;
+      const panelWidth = side * 4;
+      const panelHeight = side * 2 - 8;
+      const nextSide = side * 0.5;
+      nextGraphics.clear();
+      const next = tetrominoQueue[0];
+
+      const shapeWidth =
+        next.shape
+          .reduce(
+            (r1, r2) => r1.map((v, i) => v + r2[i]),
+            new Array(next.shape[0].length).fill(0),
+          )
+          .reduce((a, b) => a + (b ? 1 : 0), 0) * nextSide;
+
+      let shapeOffsetY = 0;
+
+      const rowSum = next.shape.map((row) => row.reduce((a, b) => a + b, 0));
+
+      for (let i = 0; i < rowSum.length; i++) {
+        if (rowSum[i]) break;
+        shapeOffsetY++;
+      }
+
+      const colSum = rotate(next.shape).map(
+        (col) => col.reduce((a, b) => a + b),
+        0,
+      );
+
+      let shapeOffsetX = 0;
+
+      for (let i = 0; i < colSum.length; i++) {
+        if (colSum[i]) break;
+        shapeOffsetX++;
+      }
+
+      const shapeHeight =
+        next.shape
+          .map((row) => row.reduce((a, b) => a + b, 0))
+          .reduce((a, b) => a + (b ? 1 : 0), 0) * nextSide;
+
+      console.log(
+        shapeWidth / nextSide,
+        shapeHeight / nextSide,
+        shapeOffsetX,
+        shapeOffsetY,
+      );
+
+      nextGraphics.lineStyle(2, 0x7f849c);
+      nextGraphics.drawRect(panelLeft, panelTop, panelWidth, panelHeight);
+      for (let i = 0; i < next.shape.length; i++) {
+        for (let j = 0; j < next.shape[i].length; j++) {
+          if (next.shape[i][j]) {
+            nextGraphics.beginFill(palette[next.type]);
+            nextGraphics.drawRect(
+              panelLeft +
+                (panelWidth - shapeWidth) / 2 +
+                (j - shapeOffsetX) * nextSide,
+              panelTop +
+                (panelHeight - shapeHeight) / 2 +
+                (i - shapeOffsetY) * nextSide,
+              nextSide,
+              nextSide,
+            );
+          }
+        }
+      }
+    };
+    drawNext();
 
     const resetCurrent = () => {
-      const tetromino = randomTetromino();
+      const tetromino = tetrominoQueue.shift();
+      tetrominoQueue.push(randomTetromino());
       current.position = { x: 4, y: 0 };
       current.shape = tintShape(tetromino.shape, tetromino.type);
+
+      drawNext();
     };
 
     const tintShape = (shape: number[][], type: TetrominoType) => {
@@ -316,15 +411,6 @@ function App() {
 
     const boardGraphis = new PIXI.Graphics();
 
-    const palette: Record<TetrominoType, number> = {
-      I: 0xcba6f7,
-      O: 0xf38ba8,
-      T: 0xfab387,
-      S: 0xa6e3a1,
-      Z: 0x94e2d5,
-      J: 0x89b4fa,
-      L: 0xf5c2e7,
-    };
     const renderBlock = (
       graphis: PIXI.Graphics,
       value: TetrominoType,
