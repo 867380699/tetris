@@ -1,28 +1,66 @@
 import { useEffect, useRef, useState } from "react";
 // import './App.css'
-import * as PIXI from "pixi.js";
 import { useWindowSize } from "./hooks/useWindowSize";
 import { createGame } from "./Game";
+import { useScore } from "./hooks/useScore";
 
 function App() {
   const main = useRef<HTMLElement>(null);
   const { width, height } = useWindowSize();
-  const [pixiApp, setPixiApp] = useState<PIXI.Application<HTMLCanvasElement>>();
-  useEffect(() => {
-    console.log("pixi effect", pixiApp);
+  const [game, setGame] = useState<ReturnType<typeof createGame>>();
+  const { score, lines, addScore, resetScore } = useScore();
+  const [left, setLeft] = useState(0);
+  const [top, setTop] = useState(0);
+  const [fontSize, setFontSize] = useState(0);
 
-    if (!pixiApp) {
+  useEffect(() => {
+    const game = createGame();
+
+    game.on("resize", ({ left, top, side }) => {
+      console.log("rere", left);
+      setLeft(left);
+      setTop(top - 2 * side + side * 0.35);
+      setFontSize(side * 0.5);
+    });
+
+    setGame(game);
+
+    if (main.current) {
+      main.current.appendChild(game.pixiApp.view);
+    }
+    return () => {
+      game.destory();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (game?.pixiApp) {
+      game.pixiApp.renderer.resize(width, height);
+    }
+  }, [game, width, height]);
+
+  useEffect(() => {
+    if (game) {
+      game.on("clearRows", (rows) => {
+        addScore(rows);
+      });
+      game.on("gameOver", () => {
+        resetScore();
+      });
+    }
+  }, [game]);
+
+  useEffect(() => {
+    if (game) {
       const {
-        pixiApp,
         side,
         moveLeft,
         moveRight,
         moveDown,
-        snapDown,
-        drawCurrent,
         rotateCurrent,
-      } = createGame();
-      setPixiApp(pixiApp);
+        drawCurrent,
+        snapDown,
+      } = game;
 
       document.addEventListener("keydown", (e) => {
         switch (e.code) {
@@ -90,29 +128,22 @@ function App() {
           }
         }
       });
-      return;
     }
-
-    if (pixiApp.view && main.current) {
-      main.current.appendChild(pixiApp.view);
-    }
-    return () => {
-      console.log("destroy");
-      if (pixiApp) {
-        pixiApp.destroy(true);
-      }
-      setPixiApp(undefined);
-    };
-  }, [pixiApp]);
-
-  useEffect(() => {
-    if (pixiApp) {
-      pixiApp.renderer.resize(width, height);
-    }
-  }, [pixiApp, width, height]);
+  }, [game]);
 
   return (
     <>
+      <div
+        className="absolute leading-tight"
+        style={{
+          left: `${left}px`,
+          top: `${top}px`,
+          fontSize: `${fontSize}px`,
+        }}
+      >
+        <p>SCORE: {score}</p>
+        <p>LINES: {lines}</p>
+      </div>
       <main ref={main} />
     </>
   );

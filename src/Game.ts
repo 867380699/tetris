@@ -1,11 +1,12 @@
 import * as PIXI from "pixi.js";
+import mitt from "mitt";
 import { TetrominoType, randomTetromino, rotate, unrotate } from "./tetromino";
 
 const row = 20;
 const col = 10;
 
 const offsetTop = 2;
-const offsetBottom = 1;
+const offsetBottom = 0.5;
 
 const palette: Record<TetrominoType, number> = {
   I: 0xcba6f7,
@@ -17,10 +18,24 @@ const palette: Record<TetrominoType, number> = {
   L: 0xf5c2e7,
 };
 
+export type GameEvent = {
+  resize: {
+    width: number;
+    height: number;
+    top: number;
+    left: number;
+    side: number;
+  };
+  clearRows: number;
+  gameOver: boolean;
+};
+
 export const createGame = () => {
   const pixiApp = new PIXI.Application<HTMLCanvasElement>({
     background: "#585b70",
   });
+
+  const emitter = mitt<GameEvent>();
 
   let time = 0;
 
@@ -30,6 +45,7 @@ export const createGame = () => {
       time = 0;
       moveDown();
       if (checkEnd()) {
+        emitter.emit("gameOver", true);
         resetBoard();
       }
       drawCurrent();
@@ -87,6 +103,13 @@ export const createGame = () => {
     top =
       (height - (row + offsetTop + offsetBottom) * side) / 2 + offsetTop * side;
 
+    emitter.emit("resize", {
+      width,
+      height,
+      top,
+      left,
+      side,
+    });
     setTimeout(() => {
       drawLines();
       drawBoard();
@@ -258,15 +281,18 @@ export const createGame = () => {
   }
 
   function clearRows() {
+    let rows = 0;
     let i = board.length - 1;
     while (i > 0) {
       if (board[i].every((v: number) => v)) {
         board.splice(i, 1);
         board.unshift(new Array(col).fill(0));
+        rows++;
       } else {
         i--;
       }
     }
+    return rows;
   }
 
   function moveLeft() {
@@ -291,8 +317,14 @@ export const createGame = () => {
     if (isCollision) {
       current.position.y -= 1;
       merge();
-      clearRows();
-      checkEnd();
+      const rows = clearRows();
+      if (rows) {
+        emitter.emit("clearRows", rows);
+      }
+      if (checkEnd()) {
+        emitter.emit("gameOver", true);
+      }
+
       drawBoard();
       resetCurrent();
     }
@@ -381,11 +413,21 @@ export const createGame = () => {
     }
   }
 
+  function on<T extends keyof GameEvent>(
+    event: T,
+    callback: (args: GameEvent[T]) => void,
+  ) {
+    emitter.on(event, callback);
+  }
+
   function destory() {
     pixiApp.destroy(true);
   }
+
   return {
     pixiApp,
+    top,
+    left,
     side,
     moveLeft,
     moveRight,
@@ -393,6 +435,7 @@ export const createGame = () => {
     snapDown,
     rotateCurrent,
     drawCurrent,
+    on,
     destory,
   };
 };
