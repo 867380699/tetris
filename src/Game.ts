@@ -1,4 +1,4 @@
-import * as PIXI from "pixi.js";
+import * as PIXI from "./pixi";
 import mitt from "mitt";
 import { TetrominoType, randomTetromino, rotate, unrotate } from "./tetromino";
 
