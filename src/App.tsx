@@ -11,7 +11,7 @@ function App() {
   const { score, lines, addScore, resetScore } = useScore();
   const [left, setLeft] = useState(0);
   const [top, setTop] = useState(0);
-  const [fontSize, setFontSize] = useState(0);
+  const [side, setSide] = useState(0);
 
   useEffect(() => {
     const game = createGame();
@@ -20,7 +20,7 @@ function App() {
       console.log("rere", left);
       setLeft(left);
       setTop(top - 2 * side + side * 0.35);
-      setFontSize(side * 0.5);
+      setSide(side);
     });
 
     setGame(game);
@@ -34,7 +34,7 @@ function App() {
   }, []);
 
   useEffect(() => {
-    if (game?.pixiApp) {
+    if (game?.pixiApp?.renderer) {
       game.pixiApp.renderer.resize(width, height);
     }
   }, [game, width, height]);
@@ -50,10 +50,10 @@ function App() {
     }
   }, [game]);
 
+  const onKeyDown = useRef<(ev: DocumentEventMap["keydown"]) => void>();
   useEffect(() => {
     if (game) {
       const {
-        side,
         moveLeft,
         moveRight,
         moveDown,
@@ -61,9 +61,8 @@ function App() {
         drawCurrent,
         snapDown,
       } = game;
-
-      document.addEventListener("keydown", (e) => {
-        switch (e.code) {
+      onKeyDown.current = (ev) => {
+        switch (ev.code) {
           case "ArrowLeft":
             moveLeft();
             drawCurrent();
@@ -85,28 +84,58 @@ function App() {
             drawCurrent();
             break;
         }
-      });
+      };
+      if (onKeyDown.current) {
+        document.addEventListener("keydown", onKeyDown.current);
+      }
+    }
+    return () => {
+      if (onKeyDown.current) {
+        document.removeEventListener("keydown", onKeyDown.current);
+      }
+    };
+  }, [game]);
+
+  const onPointerDown = useRef<(ev: DocumentEventMap["pointerdown"]) => void>();
+  const onPointerUp = useRef<(ev: DocumentEventMap["pointerup"]) => void>();
+  const onPointerCancel =
+    useRef<(ev: DocumentEventMap["pointercancel"]) => void>();
+  const onPointerMove = useRef<(ev: DocumentEventMap["pointermove"]) => void>();
+
+  useEffect(() => {
+    if (game) {
+      const {
+        moveLeft,
+        moveRight,
+        moveDown,
+        rotateCurrent,
+        drawCurrent,
+        // snapDown,
+      } = game;
 
       let isPointerDown = false;
       let isMoved = false;
       let pointerPosition = { x: 0, y: 0 };
-      document.addEventListener("pointerdown", (e) => {
+
+      onPointerDown.current = (e) => {
         isPointerDown = true;
         isMoved = false;
         pointerPosition = { x: e.clientX, y: e.clientY };
-      });
-      document.addEventListener("pointerup", () => {
+      };
+
+      onPointerUp.current = () => {
         isPointerDown = false;
         if (!isMoved) {
           rotateCurrent();
           drawCurrent();
         }
-      });
-      document.addEventListener("pointercancel", () => {
-        isPointerDown = false;
-      });
+      };
 
-      document.addEventListener("pointermove", (e) => {
+      onPointerCancel.current = () => {
+        isPointerDown = false;
+      };
+
+      onPointerMove.current = (e) => {
         if (isPointerDown) {
           const dx = e.clientX - pointerPosition.x;
           const dy = e.clientY - pointerPosition.y;
@@ -125,11 +154,44 @@ function App() {
             drawCurrent();
             pointerPosition = { x: e.clientX, y: e.clientY };
             isMoved = true;
+          } else if (dy < -3 * side) {
+            console.log(side, dy);
+            rotateCurrent();
+            drawCurrent();
+            pointerPosition = { x: e.clientX, y: e.clientY };
+            isMoved = true;
           }
         }
-      });
+      };
+
+      document.addEventListener("pointerdown", onPointerDown.current);
+      document.addEventListener("pointerup", onPointerUp.current);
+
+      document.addEventListener("pointercancel", onPointerCancel.current);
+
+      document.addEventListener("pointermove", onPointerMove.current);
+
+      return () => {
+        if (onPointerDown.current) {
+          document.removeEventListener("pointerdown", onPointerDown.current);
+        }
+        if (onPointerUp.current) {
+          document.removeEventListener("pointerup", onPointerUp.current);
+        }
+
+        if (onPointerCancel.current) {
+          document.removeEventListener(
+            "pointercancel",
+            onPointerCancel.current,
+          );
+        }
+
+        if (onPointerMove.current) {
+          document.removeEventListener("pointermove", onPointerMove.current);
+        }
+      };
     }
-  }, [game]);
+  }, [game, side]);
 
   return (
     <>
@@ -138,7 +200,7 @@ function App() {
         style={{
           left: `${left}px`,
           top: `${top}px`,
-          fontSize: `${fontSize}px`,
+          fontSize: `${side * 0.5}px`,
         }}
       >
         <p>SCORE: {score}</p>
