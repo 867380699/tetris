@@ -98,9 +98,9 @@ function App() {
 
   const onPointerDown = useRef<(ev: DocumentEventMap["pointerdown"]) => void>();
   const onPointerUp = useRef<(ev: DocumentEventMap["pointerup"]) => void>();
-  const onPointerCancel =
-    useRef<(ev: DocumentEventMap["pointercancel"]) => void>();
   const onPointerMove = useRef<(ev: DocumentEventMap["pointermove"]) => void>();
+  const onTouchMove = useRef<(ev: DocumentEventMap["touchmove"]) => void>();
+  const onTouchEnd = useRef<(ev: DocumentEventMap["touchend"]) => void>();
 
   useEffect(() => {
     if (game) {
@@ -110,17 +110,29 @@ function App() {
         moveDown,
         rotateCurrent,
         drawCurrent,
-        // snapDown,
+        snapDown,
       } = game;
 
       let isPointerDown = false;
       let isMoved = false;
+      let moveStartTime = 0;
+      let moveDownCount = 0;
       let pointerPosition = { x: 0, y: 0 };
 
       onPointerDown.current = (e) => {
         isPointerDown = true;
+        moveStartTime = Date.now();
+        moveDownCount = 0;
         isMoved = false;
         pointerPosition = { x: e.clientX, y: e.clientY };
+      };
+
+      const swipeDown = () => {
+        if (moveDownCount > 1 && Date.now() - moveStartTime < 200) {
+          snapDown();
+          drawCurrent();
+          moveDownCount = 0;
+        }
       };
 
       onPointerUp.current = () => {
@@ -128,48 +140,59 @@ function App() {
         if (!isMoved) {
           rotateCurrent();
           drawCurrent();
+        } else {
+          swipeDown();
         }
       };
 
-      onPointerCancel.current = () => {
-        isPointerDown = false;
+      onTouchEnd.current = () => {
+        swipeDown();
+      };
+
+      const onMove = (clientX: number, clientY: number) => {
+        const dx = clientX - pointerPosition.x;
+        const dy = clientY - pointerPosition.y;
+        if (dx > side) {
+          moveRight();
+          drawCurrent();
+          pointerPosition = { x: clientX, y: clientY };
+          isMoved = true;
+        } else if (dx < -side) {
+          moveLeft();
+          drawCurrent();
+          pointerPosition = { x: clientX, y: clientY };
+          isMoved = true;
+        } else if (dy > side) {
+          moveDown();
+          drawCurrent();
+          pointerPosition = { x: clientX, y: clientY };
+          isMoved = true;
+          moveDownCount++;
+        } else if (dy < -3 * side) {
+          rotateCurrent();
+          drawCurrent();
+          pointerPosition = { x: clientX, y: clientY };
+          isMoved = true;
+        }
       };
 
       onPointerMove.current = (e) => {
         if (isPointerDown) {
-          const dx = e.clientX - pointerPosition.x;
-          const dy = e.clientY - pointerPosition.y;
-          if (dx > side) {
-            moveRight();
-            drawCurrent();
-            pointerPosition = { x: e.clientX, y: e.clientY };
-            isMoved = true;
-          } else if (dx < -side) {
-            moveLeft();
-            drawCurrent();
-            pointerPosition = { x: e.clientX, y: e.clientY };
-            isMoved = true;
-          } else if (dy > side) {
-            moveDown();
-            drawCurrent();
-            pointerPosition = { x: e.clientX, y: e.clientY };
-            isMoved = true;
-          } else if (dy < -3 * side) {
-            console.log(side, dy);
-            rotateCurrent();
-            drawCurrent();
-            pointerPosition = { x: e.clientX, y: e.clientY };
-            isMoved = true;
-          }
+          const { clientX, clientY } = e;
+          onMove(clientX, clientY);
         }
+      };
+      onTouchMove.current = (e) => {
+        const { clientX, clientY } = e.touches[0];
+        onMove(clientX, clientY);
       };
 
       document.addEventListener("pointerdown", onPointerDown.current);
       document.addEventListener("pointerup", onPointerUp.current);
-
-      document.addEventListener("pointercancel", onPointerCancel.current);
-
       document.addEventListener("pointermove", onPointerMove.current);
+
+      document.addEventListener("touchmove", onTouchMove.current);
+      document.addEventListener("touchend", onTouchEnd.current);
 
       return () => {
         if (onPointerDown.current) {
@@ -178,16 +201,15 @@ function App() {
         if (onPointerUp.current) {
           document.removeEventListener("pointerup", onPointerUp.current);
         }
-
-        if (onPointerCancel.current) {
-          document.removeEventListener(
-            "pointercancel",
-            onPointerCancel.current,
-          );
-        }
-
         if (onPointerMove.current) {
           document.removeEventListener("pointermove", onPointerMove.current);
+        }
+
+        if (onTouchMove.current) {
+          document.removeEventListener("touchmove", onTouchMove.current);
+        }
+        if (onTouchEnd.current) {
+          document.removeEventListener("touchend", onTouchEnd.current);
         }
       };
     }
@@ -196,7 +218,7 @@ function App() {
   return (
     <>
       <div
-        className="absolute leading-tight"
+        className="absolute leading-tight select-none text-white"
         style={{
           left: `${left}px`,
           top: `${top}px`,
@@ -206,7 +228,7 @@ function App() {
         <p>SCORE: {score}</p>
         <p>LINES: {lines}</p>
       </div>
-      <main ref={main} />
+      <main ref={main} className="select-none" />
     </>
   );
 }
