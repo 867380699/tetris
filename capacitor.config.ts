@@ -5,7 +5,7 @@ const config: CapacitorConfig = {
   appName: "tetris",
   webDir: "dist",
   server: {
-    androidScheme: "https",
+    androidScheme: "http",
   },
 };
 
