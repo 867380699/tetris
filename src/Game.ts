@@ -38,6 +38,7 @@ export const createGame = () => {
   const emitter = mitt<GameEvent>();
 
   let time = 0;
+  let isPaused = false;
 
   pixiApp.ticker.add((deltaTime) => {
     time += deltaTime;
@@ -296,6 +297,7 @@ export const createGame = () => {
   }
 
   function moveLeft() {
+    if (isPaused) return;
     current.position.x -= 1;
     const failed = checkOutsideWalls() || checkCurrentCollision();
     if (failed) {
@@ -304,6 +306,7 @@ export const createGame = () => {
     return !failed;
   }
   function moveRight() {
+    if (isPaused) return;
     current.position.x += 1;
     const failed = checkOutsideWalls() || checkCurrentCollision();
     if (failed) {
@@ -312,6 +315,7 @@ export const createGame = () => {
     return !failed;
   }
   function moveDown() {
+    if (isPaused) return;
     current.position.y += 1;
     const isCollision = checkCurrentCollision();
     if (isCollision) {
@@ -332,12 +336,14 @@ export const createGame = () => {
   }
 
   function snapDown() {
+    if (isPaused) return;
     while (!moveDown()) {
       // do nothing
     }
   }
 
   function rotateCurrent() {
+    if (isPaused) return;
     current.shape = rotate(current.shape);
     if (checkOutsideWalls() || checkCurrentCollision()) {
       if (moveLeft()) {
@@ -424,6 +430,15 @@ export const createGame = () => {
     pixiApp.destroy(true);
   }
 
+  function pause() {
+    pixiApp.ticker.stop();
+    isPaused = true;
+  }
+  function resume() {
+    pixiApp.ticker.start();
+    isPaused = false;
+  }
+
   return {
     pixiApp,
     top,
@@ -437,5 +452,8 @@ export const createGame = () => {
     drawCurrent,
     on,
     destory,
+    pause,
+    resume,
+    isPaused,
   };
 };

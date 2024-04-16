@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { useWindowSize } from "./hooks/useWindowSize";
 import { createGame } from "./Game";
 import { useScore } from "./hooks/useScore";
+import { Icon } from "@iconify/react";
 
 function App() {
   const main = useRef<HTMLElement>(null);
@@ -12,6 +13,7 @@ function App() {
   const [left, setLeft] = useState(0);
   const [top, setTop] = useState(0);
   const [side, setSide] = useState(0);
+  const [bestScore, setBestScore] = useState(0);
 
   useEffect(() => {
     const game = createGame();
@@ -38,6 +40,33 @@ function App() {
       game.pixiApp.renderer.resize(width, height);
     }
   }, [game, width, height]);
+
+  const KEY_BEST_SCORE = "best_score";
+
+  useEffect(() => {
+    try {
+      const storageScore = localStorage.getItem(KEY_BEST_SCORE);
+      const score = Number.parseInt(storageScore || "") || 0;
+      setBestScore(score);
+    } catch (e) {
+      //
+    }
+  }, []);
+
+  useEffect(() => {
+    if (game) {
+      game.on("gameOver", () => {
+        try {
+          if (score > bestScore) {
+            setBestScore(score);
+            localStorage.setItem(KEY_BEST_SCORE, `${score}`);
+          }
+        } catch (e) {
+          //
+        }
+      });
+    }
+  }, [game, score, bestScore]);
 
   useEffect(() => {
     if (game) {
@@ -96,12 +125,6 @@ function App() {
     };
   }, [game]);
 
-  const onPointerDown = useRef<(ev: DocumentEventMap["pointerdown"]) => void>();
-  const onPointerUp = useRef<(ev: DocumentEventMap["pointerup"]) => void>();
-  const onPointerMove = useRef<(ev: DocumentEventMap["pointermove"]) => void>();
-  const onTouchMove = useRef<(ev: DocumentEventMap["touchmove"]) => void>();
-  const onTouchEnd = useRef<(ev: DocumentEventMap["touchend"]) => void>();
-
   useEffect(() => {
     if (game) {
       const {
@@ -119,7 +142,7 @@ function App() {
       let moveDownCount = 0;
       let pointerPosition = { x: 0, y: 0 };
 
-      onPointerDown.current = (e) => {
+      const onPointerDown = (e: DocumentEventMap["pointerdown"]) => {
         isPointerDown = true;
         moveStartTime = Date.now();
         moveDownCount = 0;
@@ -135,7 +158,7 @@ function App() {
         }
       };
 
-      onPointerUp.current = () => {
+      const onPointerUp = () => {
         isPointerDown = false;
         if (!isMoved) {
           rotateCurrent();
@@ -145,7 +168,7 @@ function App() {
         }
       };
 
-      onTouchEnd.current = () => {
+      const onTouchEnd = () => {
         swipeDown();
       };
 
@@ -176,51 +199,122 @@ function App() {
         }
       };
 
-      onPointerMove.current = (e) => {
+      const onPointerMove = (e: DocumentEventMap["pointermove"]) => {
         if (isPointerDown) {
           const { clientX, clientY } = e;
           onMove(clientX, clientY);
         }
       };
-      onTouchMove.current = (e) => {
+      const onTouchMove = (e: DocumentEventMap["touchmove"]) => {
         const { clientX, clientY } = e.touches[0];
         onMove(clientX, clientY);
       };
 
-      document.addEventListener("pointerdown", onPointerDown.current);
-      document.addEventListener("pointerup", onPointerUp.current);
-      document.addEventListener("pointermove", onPointerMove.current);
+      document.addEventListener("pointerdown", onPointerDown);
+      document.addEventListener("pointerup", onPointerUp);
+      document.addEventListener("pointermove", onPointerMove);
 
-      document.addEventListener("touchmove", onTouchMove.current);
-      document.addEventListener("touchend", onTouchEnd.current);
+      document.addEventListener("touchmove", onTouchMove);
+      document.addEventListener("touchend", onTouchEnd);
 
       return () => {
-        if (onPointerDown.current) {
-          document.removeEventListener("pointerdown", onPointerDown.current);
-        }
-        if (onPointerUp.current) {
-          document.removeEventListener("pointerup", onPointerUp.current);
-        }
-        if (onPointerMove.current) {
-          document.removeEventListener("pointermove", onPointerMove.current);
-        }
-
-        if (onTouchMove.current) {
-          document.removeEventListener("touchmove", onTouchMove.current);
-        }
-        if (onTouchEnd.current) {
-          document.removeEventListener("touchend", onTouchEnd.current);
-        }
+        document.removeEventListener("pointerdown", onPointerDown);
+        document.removeEventListener("pointerup", onPointerUp);
+        document.removeEventListener("pointermove", onPointerMove);
+        document.removeEventListener("touchmove", onTouchMove);
+        document.removeEventListener("touchend", onTouchEnd);
       };
     }
   }, [game, side]);
 
+  const [isPaused, setIsPaused] = useState(false);
+
+  const dialog = useRef<HTMLDialogElement>(null);
+
+  const menu = useRef<SVGSVGElement>(null);
+
+  const showModal = () => {
+    setIsPaused(true);
+
+    dialog.current?.showModal();
+    game?.pause();
+  };
+
+  const closeModal = (e: DocumentEventMap["pointerup"]) => {
+    if (dialog.current && e.target === dialog.current) {
+      dialog.current.close();
+    }
+  };
+
+  const onModalClose = () => {
+    setIsPaused(false);
+    game?.resume();
+  };
+
+  useEffect(() => {
+    const menuRef = menu.current;
+    const dialogRef = dialog.current;
+
+    if (menuRef) {
+      menuRef.addEventListener("pointerup", showModal);
+    }
+    if (dialogRef) {
+      dialogRef.addEventListener("pointerup", closeModal);
+      dialogRef.addEventListener("close", onModalClose);
+    }
+
+    return () => {
+      if (menuRef) {
+        menuRef.removeEventListener("pointerup", showModal);
+      }
+      if (dialogRef) {
+        dialogRef.removeEventListener("pointerup", closeModal);
+        dialogRef.removeEventListener("close", onModalClose);
+      }
+    };
+  }, [game]);
+
+  useEffect(() => {
+    const onEsc = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.preventDefault(); // Esc will close modal by default
+        if (isPaused) {
+          dialog.current?.close();
+          game?.resume();
+          setIsPaused(false);
+        } else {
+          dialog.current?.showModal();
+          game?.pause();
+          setIsPaused(true);
+        }
+      }
+    };
+    document.addEventListener("keydown", onEsc);
+    return () => {
+      document.removeEventListener("keydown", onEsc);
+    };
+  }, [game, isPaused]);
+
   return (
     <>
+      <Icon
+        icon={
+          isPaused
+            ? "material-symbols:play-arrow-rounded"
+            : "material-symbols:pause"
+        }
+        className="absolute font-bold"
+        style={{
+          top: `${top + 4}px`,
+          fontSize: `${side}px`,
+          left: `${left}px`,
+        }}
+        ref={menu}
+      />
       <div
         className="absolute leading-tight select-none text-white"
         style={{
-          left: `${left}px`,
+          left: `${left + side + 4}px`,
           top: `${top}px`,
           fontSize: `${side * 0.5}px`,
         }}
@@ -229,6 +323,15 @@ function App() {
         <p>LINES: {lines}</p>
       </div>
       <main ref={main} className="select-none" />
+      <dialog
+        className="px-10 py-5 rounded-xl outline-none backdrop:bg-black backdrop:bg-opacity-20 select-none"
+        ref={dialog}
+      >
+        <div>Best Score</div>
+        <div className="text-center font-bold text-lg text-yellow-500">
+          {bestScore}
+        </div>
+      </dialog>
     </>
   );
 }
