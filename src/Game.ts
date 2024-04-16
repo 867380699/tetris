@@ -28,6 +28,11 @@ export type GameEvent = {
   };
   clearRows: number;
   gameOver: boolean;
+  moveLeft: boolean;
+  moveRight: boolean;
+  moveDown: boolean;
+  snapDown: boolean;
+  rotate: boolean;
 };
 
 export const createGame = () => {
@@ -303,6 +308,7 @@ export const createGame = () => {
     if (failed) {
       current.position.x += 1;
     }
+    emitter.emit("moveLeft", !failed);
     return !failed;
   }
   function moveRight() {
@@ -312,6 +318,7 @@ export const createGame = () => {
     if (failed) {
       current.position.x -= 1;
     }
+    emitter.emit("moveRight", !failed);
     return !failed;
   }
   function moveDown() {
@@ -340,10 +347,12 @@ export const createGame = () => {
     while (!moveDown()) {
       // do nothing
     }
+    emitter.emit("snapDown", true);
   }
 
   function rotateCurrent() {
     if (isPaused) return;
+    let success = true;
     current.shape = rotate(current.shape);
     if (checkOutsideWalls() || checkCurrentCollision()) {
       if (moveLeft()) {
@@ -352,8 +361,10 @@ export const createGame = () => {
         // do nothing
       } else {
         current.shape = unrotate(current.shape);
+        success = false;
       }
     }
+    emitter.emit("rotate", success);
   }
 
   function drawCurrent() {
@@ -446,7 +457,10 @@ export const createGame = () => {
     side,
     moveLeft,
     moveRight,
-    moveDown,
+    moveDown: () => {
+      const success = !!moveDown();
+      emitter.emit("moveDown", success);
+    },
     snapDown,
     rotateCurrent,
     drawCurrent,

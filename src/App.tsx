@@ -4,6 +4,12 @@ import { useWindowSize } from "./hooks/useWindowSize";
 import { createGame } from "./Game";
 import { useScore } from "./hooks/useScore";
 import { Icon } from "@iconify/react";
+import {
+  playClearSound,
+  playGameOverSound,
+  playMoveSound,
+  playSnapSound,
+} from "./sound";
 
 function App() {
   const main = useRef<HTMLElement>(null);
@@ -75,6 +81,32 @@ function App() {
       });
       game.on("gameOver", () => {
         resetScore();
+      });
+    }
+  }, [game]);
+
+  useEffect(() => {
+    if (game) {
+      game.on("clearRows", () => {
+        playClearSound();
+      });
+      game.on("gameOver", () => {
+        playGameOverSound();
+      });
+      game.on("moveLeft", () => {
+        playMoveSound();
+      });
+      game.on("moveRight", () => {
+        playMoveSound();
+      });
+      game.on("moveDown", () => {
+        playMoveSound();
+      });
+      game.on("rotate", () => {
+        playMoveSound();
+      });
+      game.on("snapDown", () => {
+        playSnapSound();
       });
     }
   }, [game]);
