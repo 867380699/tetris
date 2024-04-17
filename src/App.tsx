@@ -7,6 +7,7 @@ import { Icon } from "@iconify/react";
 import {
   playClearSound,
   playGameOverSound,
+  playMainThemeMusic,
   playMoveSound,
   playSnapSound,
 } from "./sound";
@@ -20,6 +21,7 @@ function App() {
   const [top, setTop] = useState(0);
   const [side, setSide] = useState(0);
   const [bestScore, setBestScore] = useState(0);
+  const [init, setInit] = useState(false);
 
   useEffect(() => {
     const game = createGame();
@@ -259,11 +261,19 @@ function App() {
     }
   }, [game, side]);
 
-  const [isPaused, setIsPaused] = useState(false);
+  const [isPaused, setIsPaused] = useState(true);
 
   const dialog = useRef<HTMLDialogElement>(null);
 
   const menu = useRef<SVGSVGElement>(null);
+
+  useEffect(() => {
+    if (game) {
+      setTimeout(() => {
+        showModal();
+      }, 100);
+    }
+  }, [game]);
 
   const showModal = () => {
     setIsPaused(true);
@@ -275,6 +285,9 @@ function App() {
   const closeModal = (e: DocumentEventMap["pointerup"]) => {
     if (dialog.current && e.target === dialog.current) {
       dialog.current.close();
+    }
+    if (!init) {
+      setInit(true);
     }
   };
 
@@ -310,6 +323,7 @@ function App() {
     const onEsc = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         e.preventDefault(); // Esc will close modal by default
+        if (!init) return;
         if (isPaused) {
           dialog.current?.close();
           game?.resume();
@@ -325,7 +339,18 @@ function App() {
     return () => {
       document.removeEventListener("keydown", onEsc);
     };
-  }, [game, isPaused]);
+  }, [game, isPaused, init]);
+
+  const [isBGMPlaying, setIsBGMPlaying] = useState(false);
+
+  useEffect(() => {
+    if (!isPaused && !isBGMPlaying) {
+      playMainThemeMusic().then(() => {
+        setIsBGMPlaying(false);
+      });
+      setIsBGMPlaying(true);
+    }
+  }, [isPaused, isBGMPlaying]);
 
   return (
     <>

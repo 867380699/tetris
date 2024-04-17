@@ -458,6 +458,7 @@ export const createGame = () => {
     moveLeft,
     moveRight,
     moveDown: () => {
+      if (isPaused) return;
       const success = !!moveDown();
       emitter.emit("moveDown", success);
     },

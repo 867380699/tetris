@@ -1,11 +1,15 @@
+import { noteTable } from "./note";
+export { playMainThemeMusic } from "./bgm";
+
+// Example usage:
 enum Note {
-  C = 261.63,
-  D = 293.66,
-  E = 329.63,
-  F = 349.23,
-  G = 392.0,
-  A = 440.0,
-  B = 493.88,
+  C = noteTable.C4,
+  D = noteTable.D4,
+  E = noteTable.E4,
+  F = noteTable.F4,
+  G = noteTable.G4,
+  A = noteTable.A4,
+  B = noteTable.B4,
 }
 
 const audioContext = new AudioContext();
