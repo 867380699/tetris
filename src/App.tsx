@@ -392,8 +392,8 @@ function App() {
         className="px-10 py-5 rounded-xl outline-none backdrop:bg-black backdrop:bg-opacity-20 select-none"
         ref={dialog}
       >
-        <div>BEST SCORE</div>
-        <div className="text-center font-bold text-lg text-yellow-500">
+        <div className="text-xl">BEST SCORE</div>
+        <div className="text-center font-bold text-2xl text-yellow-500">
           {bestScore}
         </div>
       </dialog>

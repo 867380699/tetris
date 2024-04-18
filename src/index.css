@@ -2,9 +2,14 @@
 @tailwind components;
 @tailwind utilities;
 
+@font-face {
+  font-family: 'Brick';
+  src: url('./assets/tt-bricks-medium-italic-demo.regular.woff2') format('woff2');
+}
+
 :root {
-  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
+  font-family: Brick, Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.2;
   font-weight: 400;
 
   color-scheme: light dark;
