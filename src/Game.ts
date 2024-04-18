@@ -442,11 +442,11 @@ export const createGame = () => {
   }
 
   function pause() {
-    pixiApp.ticker.stop();
+    pixiApp.ticker?.stop();
     isPaused = true;
   }
   function resume() {
-    pixiApp.ticker.start();
+    pixiApp.ticker?.start();
     isPaused = false;
   }
 

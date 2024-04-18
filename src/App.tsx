@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from "react";
-// import './App.css'
 import { useWindowSize } from "./hooks/useWindowSize";
 import { createGame } from "./Game";
 import { useScore } from "./hooks/useScore";
@@ -393,7 +392,7 @@ function App() {
         className="px-10 py-5 rounded-xl outline-none backdrop:bg-black backdrop:bg-opacity-20 select-none"
         ref={dialog}
       >
-        <div>Best Score</div>
+        <div>BEST SCORE</div>
         <div className="text-center font-bold text-lg text-yellow-500">
           {bestScore}
         </div>
