@@ -11,10 +11,12 @@ import {
   playMoveSound,
   playSnapSound,
 } from "./sound";
+import { useSafeArea } from "./hooks/useSafeArea";
 
 function App() {
   const main = useRef<HTMLElement>(null);
-  const { width, height } = useWindowSize();
+  const { width: windowWidth, height: windowHeight } = useWindowSize();
+  const { safeArea } = useSafeArea();
   const [game, setGame] = useState<ReturnType<typeof createGame>>();
   const { score, lines, addScore, resetScore } = useScore();
   const [left, setLeft] = useState(0);
@@ -29,7 +31,7 @@ function App() {
     game.on("resize", ({ left, top, side }) => {
       console.log("rere", left);
       setLeft(left);
-      setTop(top - 2 * side + side * 0.35);
+      setTop(top - 2 * side + side * 0.35 + safeArea.top);
       setSide(side);
     });
 
@@ -41,13 +43,16 @@ function App() {
     return () => {
       game.destory();
     };
-  }, []);
+  }, [safeArea]);
 
   useEffect(() => {
     if (game?.pixiApp?.renderer) {
-      game.pixiApp.renderer.resize(width, height);
+      game.pixiApp.renderer.resize(
+        windowWidth,
+        windowHeight - safeArea.top - safeArea.bottom,
+      );
     }
-  }, [game, width, height]);
+  }, [game, windowWidth, windowHeight, safeArea]);
 
   const KEY_BEST_SCORE = "best_score";
 
@@ -379,7 +384,11 @@ function App() {
         <p>SCORE: {score}</p>
         <p>LINES: {lines}</p>
       </div>
-      <main ref={main} className="select-none" />
+      <main
+        ref={main}
+        className="select-none"
+        style={{ marginTop: `${safeArea.top}px` }}
+      />
       <dialog
         className="px-10 py-5 rounded-xl outline-none backdrop:bg-black backdrop:bg-opacity-20 select-none"
         ref={dialog}
