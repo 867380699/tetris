@@ -2,13 +2,15 @@ import { useEffect, useRef, useState } from "react";
 import { useWindowSize } from "./hooks/utils/useWindowSize";
 import { createGame } from "./Game";
 import { useScore } from "./hooks/app/useScore";
-import { Icon } from "@iconify/react";
 import { playMainThemeMusic } from "./sound";
 import { useSafeArea } from "./hooks/utils/useSafeArea";
 import { useKeyboardControl } from "./control/keyboard";
 import { useTouchControl } from "./control/touch";
 import { useLocalStorage } from "./hooks/utils/useLocalStorage";
 import { useSoundEffect } from "./hooks/app/useSound";
+
+import IconPause from "~icons/material-symbols/pause";
+import IconPlay from "~icons/material-symbols/play-arrow-rounded";
 
 function App() {
   const main = useRef<HTMLElement>(null);
@@ -85,7 +87,9 @@ function App() {
 
   const dialog = useRef<HTMLDialogElement>(null);
 
-  const menu = useRef<SVGSVGElement>(null);
+  const menu = useRef<HTMLElement>(null);
+
+  const Icon = isPaused ? IconPlay : IconPause;
 
   useEffect(() => {
     if (game) {
@@ -183,18 +187,15 @@ function App() {
           height: `${side * 2}px`,
         }}
       >
-        <Icon
-          icon={
-            isPaused
-              ? "material-symbols:play-arrow-rounded"
-              : "material-symbols:pause"
-          }
-          className="font-bold"
-          style={{
-            fontSize: `${side}px`,
-          }}
-          ref={menu}
-        />
+        <span ref={menu}>
+          <Icon
+            className="font-bold"
+            style={{
+              fontSize: `${side}px`,
+            }}
+          />
+        </span>
+
         <div
           className="leading-tight select-none text-white"
           style={{
