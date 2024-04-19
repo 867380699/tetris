@@ -31,7 +31,7 @@ function App() {
     game.on("resize", ({ left, top, side }) => {
       console.log("rere", left);
       setLeft(left);
-      setTop(top - 2 * side + side * 0.35 + safeArea.top);
+      setTop(top - 2 * side + safeArea.top);
       setSide(side);
     });
 
@@ -174,36 +174,44 @@ function App() {
 
   return (
     <>
-      <Icon
-        icon={
-          isPaused
-            ? "material-symbols:play-arrow-rounded"
-            : "material-symbols:pause"
-        }
-        className="absolute font-bold"
+      <header
+        className="absolute flex items-center gap-1"
         style={{
-          top: `${top + 4}px`,
-          fontSize: `${side}px`,
           left: `${left}px`,
-        }}
-        ref={menu}
-      />
-      <div
-        className="absolute leading-tight select-none text-white"
-        style={{
-          left: `${left + side + 4}px`,
           top: `${top}px`,
-          fontSize: `${side * 0.5}px`,
+          width: `${side * 6}px`,
+          height: `${side * 2}px`,
         }}
       >
-        <p>SCORE: {score}</p>
-        <p>LINES: {lines}</p>
-      </div>
+        <Icon
+          icon={
+            isPaused
+              ? "material-symbols:play-arrow-rounded"
+              : "material-symbols:pause"
+          }
+          className="font-bold"
+          style={{
+            fontSize: `${side}px`,
+          }}
+          ref={menu}
+        />
+        <div
+          className="leading-tight select-none text-white"
+          style={{
+            fontSize: `${side * 0.5}px`,
+          }}
+        >
+          <p>SCORE: {score}</p>
+          <p>LINES: {lines}</p>
+        </div>
+      </header>
+
       <main
         ref={main}
         className="select-none"
         style={{ marginTop: `${safeArea.top}px` }}
       />
+
       <dialog
         className="px-10 py-5 rounded-xl outline-none backdrop:bg-black backdrop:bg-opacity-20 select-none"
         ref={dialog}
