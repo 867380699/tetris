@@ -13,6 +13,7 @@ import {
 import { useSafeArea } from "./hooks/useSafeArea";
 import { useKeyboardControl } from "./control/keyboard";
 import { useTouchControl } from "./control/touch";
+import { useLocalStorage } from "./hooks/useLocalStorage";
 
 function App() {
   const main = useRef<HTMLElement>(null);
@@ -23,8 +24,11 @@ function App() {
   const [left, setLeft] = useState(0);
   const [top, setTop] = useState(0);
   const [side, setSide] = useState(0);
-  const [bestScore, setBestScore] = useState(0);
   const [init, setInit] = useState(false);
+
+  const KEY_BEST_SCORE = "best_score";
+
+  const [bestScore, setBestScore] = useLocalStorage<number>(KEY_BEST_SCORE, 0);
 
   useEffect(() => {
     const game = createGame();
@@ -55,28 +59,11 @@ function App() {
     }
   }, [game, windowWidth, windowHeight, safeArea]);
 
-  const KEY_BEST_SCORE = "best_score";
-
-  useEffect(() => {
-    try {
-      const storageScore = localStorage.getItem(KEY_BEST_SCORE);
-      const score = Number.parseInt(storageScore || "") || 0;
-      setBestScore(score);
-    } catch (e) {
-      //
-    }
-  }, []);
-
   useEffect(() => {
     if (game) {
       game.on("gameOver", () => {
-        try {
-          if (score > bestScore) {
-            setBestScore(score);
-            localStorage.setItem(KEY_BEST_SCORE, `${score}`);
-          }
-        } catch (e) {
-          //
+        if (score > bestScore) {
+          setBestScore(score);
         }
       });
     }
