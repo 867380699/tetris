@@ -1,19 +1,14 @@
 import { useEffect, useRef, useState } from "react";
-import { useWindowSize } from "./hooks/useWindowSize";
+import { useWindowSize } from "./hooks/utils/useWindowSize";
 import { createGame } from "./Game";
-import { useScore } from "./hooks/useScore";
+import { useScore } from "./hooks/app/useScore";
 import { Icon } from "@iconify/react";
-import {
-  playClearSound,
-  playGameOverSound,
-  playMainThemeMusic,
-  playMoveSound,
-  playSnapSound,
-} from "./sound";
-import { useSafeArea } from "./hooks/useSafeArea";
+import { playMainThemeMusic } from "./sound";
+import { useSafeArea } from "./hooks/utils/useSafeArea";
 import { useKeyboardControl } from "./control/keyboard";
 import { useTouchControl } from "./control/touch";
-import { useLocalStorage } from "./hooks/useLocalStorage";
+import { useLocalStorage } from "./hooks/utils/useLocalStorage";
+import { useSoundEffect } from "./hooks/app/useSound";
 
 function App() {
   const main = useRef<HTMLElement>(null);
@@ -80,31 +75,7 @@ function App() {
     }
   }, [game]);
 
-  useEffect(() => {
-    if (game) {
-      game.on("clearRows", () => {
-        playClearSound();
-      });
-      game.on("gameOver", () => {
-        playGameOverSound();
-      });
-      game.on("moveLeft", () => {
-        playMoveSound();
-      });
-      game.on("moveRight", () => {
-        playMoveSound();
-      });
-      game.on("moveDown", () => {
-        playMoveSound();
-      });
-      game.on("rotate", () => {
-        playMoveSound();
-      });
-      game.on("snapDown", () => {
-        playSnapSound();
-      });
-    }
-  }, [game]);
+  useSoundEffect(game);
 
   useKeyboardControl(game);
 
