@@ -34,7 +34,7 @@ export type GameEvent = {
   snapDown: boolean;
   rotate: boolean;
 };
-
+export type Game = ReturnType<typeof createGame>;
 export const createGame = () => {
   const pixiApp = new PIXI.Application<HTMLCanvasElement>({
     background: "#585b70",
