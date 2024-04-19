@@ -14,6 +14,8 @@ export const useLocalStorage = <T extends string | number | boolean>(
         } else {
           localStorage.removeItem(key);
         }
+      } else {
+        return initialValue;
       }
     } catch (e) {
       return initialValue;
