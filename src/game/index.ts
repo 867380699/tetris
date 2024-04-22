@@ -33,6 +33,7 @@ export type GameEvent = {
   moveDown: boolean;
   snapDown: boolean;
   rotate: boolean;
+  levelChange: number;
 };
 export type Game = ReturnType<typeof createGame>;
 export const createGame = () => {
@@ -42,17 +43,26 @@ export const createGame = () => {
 
   const emitter = mitt<GameEvent>();
 
+  let level = 1;
+
+  const setLevel = (lv: number) => {
+    level = lv;
+    emitter.emit("levelChange", level);
+  };
+
   let time = 0;
   let isPaused = false;
 
   pixiApp.ticker.add((deltaTime) => {
     time += deltaTime;
-    if (time > 60) {
+
+    if (time > Math.max(60 - (level - 1) * 4, 4)) {
       time = 0;
       moveDown();
       if (checkEnd()) {
         emitter.emit("gameOver", true);
         resetBoard();
+        setLevel(1);
       }
       drawCurrent();
       drawBoard();
@@ -325,12 +335,18 @@ export const createGame = () => {
       if (rows) {
         emitter.emit("clearRows", rows);
       }
-      if (checkEnd()) {
+
+      resetCurrent();
+
+      if (checkEnd() || checkCurrentCollision()) {
         emitter.emit("gameOver", true);
+        setLevel(1);
+        resetBoard();
       }
 
       drawBoard();
-      resetCurrent();
+
+      time = 0;
     }
     return isCollision;
   }
@@ -430,6 +446,13 @@ export const createGame = () => {
     emitter.on(event, callback);
   }
 
+  function off<T extends keyof GameEvent>(
+    event: T,
+    callback: (args: GameEvent[T]) => void,
+  ) {
+    emitter.off(event, callback);
+  }
+
   function destory() {
     pixiApp.destroy(true);
   }
@@ -459,9 +482,12 @@ export const createGame = () => {
     rotateCurrent,
     drawCurrent,
     on,
+    off,
     destory,
     pause,
     resume,
     isPaused,
+    level,
+    setLevel,
   };
 };

@@ -79,6 +79,31 @@ function App() {
     }
   }, [game]);
 
+  const [level, setLevel] = useState(1);
+
+  useEffect(() => {
+    if (!game) return;
+
+    const onLevelChange = (level: number) => {
+      setLevel(level);
+    };
+
+    game.on("levelChange", onLevelChange);
+
+    return () => {
+      game.off("levelChange", onLevelChange);
+    };
+  }, [game]);
+
+  useEffect(() => {
+    if (!game) return;
+    const { setLevel: setGameLevel } = game;
+    const levelRows = 20;
+    if (lines >= level * levelRows) {
+      setGameLevel(~~(lines / levelRows) + 1);
+    }
+  }, [game, level, lines]);
+
   useSoundEffect(game);
 
   useKeyboardControl(game);
@@ -188,11 +213,12 @@ function App() {
         <div
           className="leading-tight select-none text-white"
           style={{
-            fontSize: `${side * 0.5}px`,
+            fontSize: `${side * 0.45}px`,
           }}
         >
           <p>SCORE: {score}</p>
           <p>LINES: {lines}</p>
+          <p>LEVEL: {level}</p>
         </div>
       </header>
 
