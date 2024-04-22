@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useWindowSize } from "./hooks/utils/useWindowSize";
 import { createGame } from "./Game";
 import { useScore } from "./hooks/app/useScore";
@@ -12,6 +12,8 @@ import { useSoundEffect } from "./hooks/app/useSound";
 import IconPause from "~icons/material-symbols/pause";
 import IconPlay from "~icons/material-symbols/play-arrow-rounded";
 import { useDialog } from "./hooks/app/useDialog";
+
+import { useEventListener } from "./hooks/utils/useEventListener";
 
 function App() {
   const main = useRef<HTMLElement>(null);
@@ -134,22 +136,10 @@ function App() {
     }
   }, [game]);
 
-  useEffect(() => {
-    const menuRef = menu.current;
+  useEventListener(menu.current, "pointerup", pause);
 
-    if (menuRef) {
-      menuRef.addEventListener("pointerup", pause);
-    }
-
-    return () => {
-      if (menuRef) {
-        menuRef.removeEventListener("pointerup", pause);
-      }
-    };
-  }, [game]);
-
-  useEffect(() => {
-    const onEsc = (e: KeyboardEvent) => {
+  const onEsc = useCallback(
+    (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         e.preventDefault(); // Esc will close modal by default
         if (isPaused) {
@@ -158,12 +148,11 @@ function App() {
           pause();
         }
       }
-    };
-    document.addEventListener("keydown", onEsc);
-    return () => {
-      document.removeEventListener("keydown", onEsc);
-    };
-  }, [game, isPaused]);
+    },
+    [isPaused],
+  );
+
+  useEventListener(document, "keydown", onEsc);
 
   const [isBGMPlaying, setIsBGMPlaying] = useState(false);
 
