@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { Game } from "../Game";
+import type { Game } from "../game";
 
 export const useTouchControl = (game: Game | undefined, side: number) => {
   useEffect(() => {

@@ -1,4 +1,4 @@
-import * as PIXI from "./pixi";
+import * as PIXI from "../pixi";
 import mitt from "mitt";
 import { TetrominoType, randomTetromino, rotate, unrotate } from "./tetromino";
 
@@ -193,13 +193,6 @@ export const createGame = () => {
       next.shape
         .map((row) => row.reduce((a, b) => a + b, 0))
         .reduce((a, b) => a + (b ? 1 : 0), 0) * nextSide;
-
-    console.log(
-      shapeWidth / nextSide,
-      shapeHeight / nextSide,
-      shapeOffsetX,
-      shapeOffsetY,
-    );
 
     nextGraphics.lineStyle(2, 0x7f849c);
     nextGraphics.drawRect(panelLeft, panelTop, panelWidth, panelHeight);

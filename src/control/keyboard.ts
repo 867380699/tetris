@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { Game } from "../Game";
+import type { Game } from "../game";
 
 export function useKeyboardControl(game: Game | undefined) {
   useEffect(() => {

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useWindowSize } from "./hooks/utils/useWindowSize";
-import { createGame } from "./Game";
+import { createGame } from "./game";
 import { useScore } from "./hooks/app/useScore";
 import { playMainThemeMusic } from "./sound";
 import { useSafeArea } from "./hooks/utils/useSafeArea";

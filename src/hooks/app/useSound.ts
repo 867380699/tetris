@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { Game } from "../../Game";
+import { Game } from "../../game";
 import {
   playClearSound,
   playGameOverSound,
