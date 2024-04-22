@@ -11,6 +11,7 @@ import { useSoundEffect } from "./hooks/app/useSound";
 
 import IconPause from "~icons/material-symbols/pause";
 import IconPlay from "~icons/material-symbols/play-arrow-rounded";
+import { useDialog } from "./hooks/app/useDialog";
 
 function App() {
   const main = useRef<HTMLElement>(null);
@@ -21,7 +22,6 @@ function App() {
   const [left, setLeft] = useState(0);
   const [top, setTop] = useState(0);
   const [side, setSide] = useState(0);
-  const [init, setInit] = useState(false);
 
   const KEY_BEST_SCORE = "best_score";
 
@@ -85,7 +85,42 @@ function App() {
 
   const [isPaused, setIsPaused] = useState(true);
 
-  const dialog = useRef<HTMLDialogElement>(null);
+  const pause = () => {
+    setIsPaused(true);
+  };
+
+  const resume = () => {
+    setIsPaused(false);
+  };
+
+  const {
+    Dialog: Modal,
+    open: openModal,
+    close: closeModal,
+    isOpen: isModalOpen,
+  } = useDialog();
+
+  useEffect(() => {
+    if (isPaused) {
+      openModal();
+    } else {
+      closeModal();
+    }
+  }, [isPaused, openModal, closeModal]);
+
+  useEffect(() => {
+    if (isPaused) {
+      game?.pause();
+    } else {
+      game?.resume();
+    }
+  }, [game, isPaused]);
+
+  useEffect(() => {
+    if (!isModalOpen) {
+      resume();
+    }
+  }, [isModalOpen]);
 
   const menu = useRef<HTMLElement>(null);
 
@@ -94,51 +129,21 @@ function App() {
   useEffect(() => {
     if (game) {
       setTimeout(() => {
-        showModal();
+        pause();
       }, 100);
     }
   }, [game]);
 
-  const showModal = () => {
-    setIsPaused(true);
-
-    dialog.current?.showModal();
-    game?.pause();
-  };
-
-  const closeModal = (e: DocumentEventMap["pointerup"]) => {
-    if (dialog.current && e.target === dialog.current) {
-      dialog.current.close();
-    }
-    if (!init) {
-      setInit(true);
-    }
-  };
-
-  const onModalClose = () => {
-    setIsPaused(false);
-    game?.resume();
-  };
-
   useEffect(() => {
     const menuRef = menu.current;
-    const dialogRef = dialog.current;
 
     if (menuRef) {
-      menuRef.addEventListener("pointerup", showModal);
-    }
-    if (dialogRef) {
-      dialogRef.addEventListener("pointerup", closeModal);
-      dialogRef.addEventListener("close", onModalClose);
+      menuRef.addEventListener("pointerup", pause);
     }
 
     return () => {
       if (menuRef) {
-        menuRef.removeEventListener("pointerup", showModal);
-      }
-      if (dialogRef) {
-        dialogRef.removeEventListener("pointerup", closeModal);
-        dialogRef.removeEventListener("close", onModalClose);
+        menuRef.removeEventListener("pointerup", pause);
       }
     };
   }, [game]);
@@ -147,15 +152,10 @@ function App() {
     const onEsc = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         e.preventDefault(); // Esc will close modal by default
-        if (!init) return;
         if (isPaused) {
-          dialog.current?.close();
-          game?.resume();
-          setIsPaused(false);
+          resume();
         } else {
-          dialog.current?.showModal();
-          game?.pause();
-          setIsPaused(true);
+          pause();
         }
       }
     };
@@ -163,7 +163,7 @@ function App() {
     return () => {
       document.removeEventListener("keydown", onEsc);
     };
-  }, [game, isPaused, init]);
+  }, [game, isPaused]);
 
   const [isBGMPlaying, setIsBGMPlaying] = useState(false);
 
@@ -213,15 +213,12 @@ function App() {
         style={{ marginTop: `${safeArea.top}px` }}
       />
 
-      <dialog
-        className="px-10 py-5 rounded-xl outline-none backdrop:bg-black backdrop:bg-opacity-20 select-none"
-        ref={dialog}
-      >
+      <Modal>
         <div className="text-xl">BEST SCORE</div>
         <div className="text-center font-bold text-2xl text-yellow-500">
           {bestScore}
         </div>
-      </dialog>
+      </Modal>
     </>
   );
 }
