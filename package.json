@@ -9,6 +9,8 @@
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
     "sync": "nr build && pnpm cap sync",
+    "android": "cap open android",
+    "ios": "cap open ios",
     "tauri:dev": "tauri dev",
     "tauri:build": "tauri build"
   },
