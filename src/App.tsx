@@ -162,6 +162,7 @@ function App() {
   }, [game]);
 
   useEventListener(menu.current, "pointerup", pause);
+  useEventListener(menu.current, "touchend", pause);
 
   const onEsc = useCallback(
     (e: KeyboardEvent) => {
