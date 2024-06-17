@@ -2,6 +2,7 @@ import { noteTable } from "./note";
 
 export const playMainThemeMusic = () => {
   return new Promise((resolve) => {
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
     const audioContext = new AudioContext();
 
     // Define the parameters for the tune
@@ -129,6 +130,7 @@ export const playMainThemeMusic = () => {
 
     sopranoNode.onended = () => {
       resolve(true);
+      console.log('bgm "soprano" ended', audioContext.close);
       audioContext.close();
     };
   });

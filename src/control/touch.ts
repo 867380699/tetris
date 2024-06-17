@@ -19,13 +19,13 @@ export const useTouchControl = (game: Game | undefined, side: number) => {
       let moveDownCount = 0;
       let pointerPosition = { x: 0, y: 0 };
 
-      const onPointerDown = (e: DocumentEventMap["pointerdown"]) => {
+      const onDown = (x:number,y:number) => {
         isPointerDown = true;
         moveStartTime = Date.now();
         moveDownCount = 0;
         isMoved = false;
-        pointerPosition = { x: e.clientX, y: e.clientY };
-      };
+        pointerPosition = { x, y };
+      }
 
       const swipeDown = () => {
         if (moveDownCount > 1 && Date.now() - moveStartTime < 200) {
@@ -35,45 +35,35 @@ export const useTouchControl = (game: Game | undefined, side: number) => {
         }
       };
 
-      const onPointerUp = () => {
-        isPointerDown = false;
-        if (!isMoved) {
-          rotateCurrent();
-          drawCurrent();
-        } else {
-          swipeDown();
-        }
-      };
-
-      const onTouchEnd = () => {
-        swipeDown();
-      };
-
       const onMove = (clientX: number, clientY: number) => {
         const dx = clientX - pointerPosition.x;
         const dy = clientY - pointerPosition.y;
         if (dx > side) {
+          pointerPosition = { x: clientX, y: clientY };
+          isMoved = true;
           moveRight();
           drawCurrent();
+        } else if (dx < -side) {
           pointerPosition = { x: clientX, y: clientY };
           isMoved = true;
-        } else if (dx < -side) {
           moveLeft();
           drawCurrent();
+        } else if (dy > side) {
           pointerPosition = { x: clientX, y: clientY };
           isMoved = true;
-        } else if (dy > side) {
           moveDown();
           drawCurrent();
-          pointerPosition = { x: clientX, y: clientY };
-          isMoved = true;
           moveDownCount++;
         } else if (dy < -3 * side) {
-          rotateCurrent();
-          drawCurrent();
           pointerPosition = { x: clientX, y: clientY };
           isMoved = true;
+          rotateCurrent();
+          drawCurrent();
         }
+      };
+      
+      const onPointerDown = (e: DocumentEventMap["pointerdown"]) => {
+        onDown(e.clientX, e.clientY )
       };
 
       const onPointerMove = (e: DocumentEventMap["pointermove"]) => {
@@ -82,15 +72,38 @@ export const useTouchControl = (game: Game | undefined, side: number) => {
           onMove(clientX, clientY);
         }
       };
-      const onTouchMove = (e: DocumentEventMap["touchmove"]) => {
+
+      const onPointerUp = () => {
+        if (isPointerDown) {
+          isPointerDown = false;
+          if (!isMoved) {
+            rotateCurrent();
+            drawCurrent();
+          } else {
+            swipeDown();
+          }
+        }
+      };
+
+      const onTouchStart = (e: DocumentEventMap["touchstart"]) => {
         const { clientX, clientY } = e.touches[0];
-        onMove(clientX, clientY);
+        onDown(clientX,clientY)
+      };
+      const onTouchMove = (e: DocumentEventMap["touchmove"]) => {
+        if (isPointerDown) {
+          const { clientX, clientY } = e.touches[0];
+          onMove(clientX, clientY);
+        }
+      };
+      const onTouchEnd = () => {
+        onPointerUp();
       };
 
       document.addEventListener("pointerdown", onPointerDown);
-      document.addEventListener("pointerup", onPointerUp);
       document.addEventListener("pointermove", onPointerMove);
+      document.addEventListener("pointerup", onPointerUp);
 
+      document.addEventListener("touchstart", onTouchStart)
       document.addEventListener("touchmove", onTouchMove);
       document.addEventListener("touchend", onTouchEnd);
 
@@ -98,6 +111,7 @@ export const useTouchControl = (game: Game | undefined, side: number) => {
         document.removeEventListener("pointerdown", onPointerDown);
         document.removeEventListener("pointerup", onPointerUp);
         document.removeEventListener("pointermove", onPointerMove);
+        document.removeEventListener("touchstart", onTouchStart)
         document.removeEventListener("touchmove", onTouchMove);
         document.removeEventListener("touchend", onTouchEnd);
       };

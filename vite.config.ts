@@ -6,6 +6,9 @@ import Icons from "unplugin-icons/vite";
 // https://vitejs.dev/config/
 export default defineConfig({
   base: process.env.BASE_URL || "/",
+  build: {
+    target: "safari12",
+  },
   plugins: [
     react(),
     Icons({
@@ -35,6 +38,7 @@ export default defineConfig({
     }),
   ],
   server: {
+    host: "0.0.0.0",
     port: 5174,
   },
 });

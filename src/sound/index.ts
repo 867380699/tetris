@@ -12,6 +12,7 @@ enum Note {
   B = noteTable.B4,
 }
 
+const AudioContext = window.AudioContext || window.webkitAudioContext;
 const audioContext = new AudioContext();
 const duration = 200;
 
